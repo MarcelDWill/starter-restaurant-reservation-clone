@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { listReservations } from "../utils/api";
+import {today, next, previous} from "../utils/date-time";
 import ErrorAlert from "../layout/ErrorAlert";
 
 /**
@@ -9,6 +10,7 @@ import ErrorAlert from "../layout/ErrorAlert";
  * @returns {JSX.Element}
  */
 function Dashboard({ date }) {
+  const [date, setDate] = useState(today());//setting the date to today
   const [reservations, setReservations] = useState([]);
   const [reservationsError, setReservationsError] = useState(null);
 
