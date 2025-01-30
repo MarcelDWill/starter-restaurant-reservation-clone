@@ -24,7 +24,8 @@ function searchByPhone(mobile_number) {
 function create(reservation) {
     return knex('reservations')
     .insert(reservation)//inserting the reservation object into the reservations table
-    .then((res)=> res[0]);//returning the first element of the array
+    .returning('*')//returning all columns
+    .then((createdRecord) => createdRecord[0]);//returning the first element of the array
 }
 
 function read(reservation_id) {
@@ -38,7 +39,7 @@ function update(updatedReservation) {
     .select('*')//selecting all columns
     .where({ reservation_id: updatedReservation.reservation_id })//where the reservation_id is equal to the reservation_id passed in
     .update(updatedReservation, '*')//updating the reservation with the updatedReservation object
-    .then((res) => res[0]);//returning the first element of the array
+    .then((updatedRecord) => updatedRecord[0]);//returning the first element of the array
 }
 
 function updateStatus(reservation_id, status) {
