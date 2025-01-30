@@ -43,73 +43,97 @@ function hasValidDate(req, res, next) {
   const { data = {} } = req.body;
   const { reservation_date, reservation_time } = data;
 
-  // Ensure reservation_date is provided
-  if (!reservation_date || typeof reservation_date !== "string") {
+  console.log("Received reservation_date:", reservation_date);
+  console.log("Received reservation_time:", reservation_time);
+
+  if (!reservation_date || isNaN(Date.parse(reservation_date))) {
     return next({
       status: 400,
-      message: "reservation_date is required and must be a string in YYYY-MM-DD format.",
+      message: `Invalid reservation_date`,
     });
   }
 
-  // Validate reservation_date format using regex
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(reservation_date)) {
+  if (!reservation_time || !/^\d{2}:\d{2}$/.test(reservation_time)) {
     return next({
       status: 400,
-      message: "Invalid reservation_date format. Use YYYY-MM-DD.",
+      message: `Invalid reservation_time`,
     });
   }
 
-  // Convert reservation_date to Date object and check if it's a valid date
-  const dateObject = new Date(`${reservation_date}T00:00:00`);
-  if (isNaN(dateObject.getTime())) {
-    return next({
-      status: 400,
-      message: "Invalid reservation_date. Please enter a valid date.",
-    });
-  }
-
-  // Ensure the restaurant is not closed on Tuesdays
-  const day = dateObject.getUTCDay();
+  const day = new Date(reservation_date).getUTCDay();
   if (day === 2) {
     return next({
       status: 400,
-      message: "Restaurant is closed on Tuesdays.",
+      message: `Restaurant is closed on Tuesdays`,
     });
   }
 
-  // Ensure reservation_time is provided
-  if (!reservation_time || typeof reservation_time !== "string") {
+  const formattedDate = new Date(`${reservation_date}T${reservation_time}:00`);
+  console.log("Formatted reservation date and time:", formattedDate);
+
+  if (isNaN(formattedDate.getTime())) {
     return next({
       status: 400,
-      message: "reservation_time is required and must be in HH:MM:SS format.",
+      message: `Invalid reservation date and time combination`,
     });
   }
 
-  // Validate reservation_time format
-  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
-  if (!timeRegex.test(reservation_time)) {
-    return next({
-      status: 400,
-      message: "Invalid reservation_time format. Use HH:MM:SS.",
-    });
-  }
+  const now = new Date(); // Compare using UTC
+  console.log("Current date and time:", now);
 
-  // Convert reservation date and time to a Date object in local time
-  const formattedDate = new Date(`${reservation_date}T${reservation_time}`);
-  const now = new Date();
-
-  // Ensure the reservation is in the future
   if (formattedDate <= now) {
     return next({
       status: 400,
-      message: "Reservation must be in the future.",
+      message: `Reservation must be in the future`,
     });
   }
 
   next();
 }
 
+
+
+async function validateBody(request, res, next) {
+  const required = [
+    "first_name",
+    "last_name",
+    "mobile_number",
+    "reservation_date",
+    "reservation_time",
+    "people",
+  ];
+
+  for (const field of required) {
+    if (!request.body.data.hasOwnProperty(field) || request.body.data[field] === "") {
+      return next({ status: 400, message: `Field required: '${field}'` });
+    }
+  }
+
+  if (typeof request.body.data.people !== "number") {
+    return next({
+      status: 400,
+      message: `The 'people' field must be a number.`,
+    });
+  }
+
+  if (request.body.data.people < 1) {
+    return next({
+      status: 400,
+      message: `The 'people' field must be at least 1.`,
+    });
+  }
+
+  if (
+    Number.isNaN(Date.parse(`${request.body.data.reservation_date} ${request.body.data.reservation_time}`))
+  ) {
+    return next({
+      status: 400,
+      message: `'reservation_date' or 'reservation_time' field is not in the correct format`,
+    });
+  }
+
+  next();
+}
 
 
 
@@ -118,29 +142,31 @@ function hasValidTime(req, res, next) {
   const { data = {} } = req.body;
   const time = data["reservation_time"];
 
-  if (!/^([0-1][0-9]|2[0-3]):([0-5][0-9])$/.test(time)) {
-    next({
+  const timeRegex = /^([01]?\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/;
+  if (!timeRegex.test(time)) {
+    return next({
       status: 400,
-      message: `Invalid reservation_time`,
+      message: "Invalid reservation_time format. Use HH:MM or HH:MM:SS.",
     });
   }
 
-  const hours = Number(time.split(":")[0]);
-  const minutes = Number(time.split(":")[1]);
+  const [hours, minutes] = time.split(":").map(Number);
   if (hours < 10 || (hours === 10 && minutes < 30)) {
-    next({
+    return next({
       status: 400,
-      message: `Reservation must be after 10:30AM`,
+      message: "Reservation must be after 10:30AM.",
     });
   }
   if (hours > 21 || (hours === 21 && minutes > 30)) {
-    next({
+    return next({
       status: 400,
-      message: `Reservation must be before 9:30PM`,
+      message: "Reservation must be before 9:30PM.",
     });
   }
+
   next();
 }
+
 
 function hasValidNumber(req, res, next) {
   const { data = {} } = req.body;
@@ -149,18 +175,20 @@ function hasValidNumber(req, res, next) {
   if (typeof people !== "number" || people < 1) {
     return next({
       status: 400,
-      message: `people must be a number greater than 0`,
+      message: `The 'people' field must be a number greater than or equal to 1.`,
     });
   }
+
   if (!Number.isInteger(people)) {
     return next({
       status: 400,
-      message: `people must be a whole number`,
+      message: `The 'people' field must be a whole number.`,
     });
   }
 
   next();
 }
+
 
 async function reservationExists(req, res, next) {
   const { reservation_id } = req.params;
@@ -170,6 +198,13 @@ async function reservationExists(req, res, next) {
     return next();
   }
   next({ status: 404, message: `Reservation ${reservation_id} cannot be found.` });
+}
+
+async function validateData(request, res, next) {
+  if (!request.body.data) {
+      return next({ status: 400, message: "Body must include a data object" });
+  }
+  next();
 }
 
 /**
@@ -188,8 +223,8 @@ async function list(req, res) {
 }
 
 async function create(req, res) {
-  const reservation  = await service.create(req.body.data);
-  res.status(201).json({ reservation  });
+  const data  = await service.create(req.body.data);
+  res.status(201).json({ data  });
 }
 
 async function read(req, res) {
@@ -219,28 +254,30 @@ async function updateStatus(req, res) {
 module.exports = {
   list: asyncErrorBoundary(list),
   create: [
-    hasRequiredProperties,
-    asyncErrorBoundary(create),
-    hasValidProperties,
-    hasValidDate,
-    hasValidNumber,
-    hasValidTime,
+    asyncErrorBoundary(validateData),  // Ensure data object exists
+    hasRequiredProperties,            // Validate required properties are present
+    hasValidProperties,               // Check for invalid fields
+    hasValidNumber,                   // Ensure 'people' is a valid number before date/time
+    hasValidDate,                     // Validate reservation date and ensure not a closed day
+    hasValidTime,                     // Validate reservation time
+    asyncErrorBoundary(validateBody), // Additional validation logic (general)
+    asyncErrorBoundary(create),       // Create reservation
   ],
+  
   read: [asyncErrorBoundary(reservationExists), read],
   update: [
     reservationExists,
     hasRequiredProperties,
-    asyncErrorBoundary(update),
     hasValidProperties,
     hasValidDate,
     hasValidNumber,
     hasValidTime,
-
+    asyncErrorBoundary(validateBody),
+    asyncErrorBoundary(update), // Move this to the end
   ],
   updateStatus: [
     reservationExists,
     asyncErrorBoundary(updateStatus),
   ],
   reservationExists,
-  
 };
