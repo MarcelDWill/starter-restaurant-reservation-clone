@@ -93,15 +93,15 @@ async function reservationIdExists(req, res, next) {
 
 const hasReservationId = hasProperties("reservation_id");
 
-function tableIsOccupied(req, res, next) {// Check if the table is occupied
-    const { reservation_id } = res.locals.table;// Get the reservation_id from the table
-  if (!reservation_id) {// If the table is not occupied
-    return next({
-      status: 400,
-      message: `Table is not occupied`,
-    });
-  }
-  return next();
+function tableIsOccupied(req, res, next) {
+    const { table } = res.locals;
+    if (table.reservation_id) {
+      return next({
+        status: 400,
+        message: "Table is occupied.",
+      });
+    }
+    next();
   }
 
 async function tableIsUnoccupied(req, res, next) {

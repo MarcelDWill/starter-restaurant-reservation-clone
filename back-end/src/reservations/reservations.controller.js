@@ -297,6 +297,7 @@ module.exports = {
     hasValidDate,
     hasValidNumber,
     hasValidTime,
+    hasValidStatus,
     asyncErrorBoundary(validateBody),
     asyncErrorBoundary(update), // Move this to the end
   ],
