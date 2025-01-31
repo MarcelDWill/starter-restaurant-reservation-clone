@@ -47,7 +47,7 @@ function updateStatus(reservation_id, status) {
     .select('*')//selecting all columns
     .where({ reservation_id })//where the reservation_id is equal to the reservation_id passed in
     .update({ status }, '*')//updating the status with the status passed in
-    .then(() => read(reservation_id));//returning the reservation with the reservation_id passed in
+    .then((updated) => updated[0]);//returning the reservation with the reservation_id passed in
 }
 
 module.exports = {

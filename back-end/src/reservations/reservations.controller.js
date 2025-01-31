@@ -207,6 +207,31 @@ async function validateData(request, res, next) {
   next();
 }
 
+function hasValidStatus(req, res, next) {
+  const { status } = req.body.data;
+  const currentStatus = res.locals.reservation.status;
+
+  if (currentStatus === "finished" || currentStatus === "cancelled") {
+    return next({
+      status: 400,
+      message: `Reservation status is finished`,
+    });
+  }
+  if (
+    status === "booked" ||
+    status === "seated" ||
+    status === "finished" ||
+    status === "cancelled"
+  ) {
+    res.locals.status = status;
+    return next();
+  }
+  next({
+    status: 400,
+    message: `Invalid status: ${status}`,
+  });
+}
+
 /**
  * List handler for reservation resources
  */
@@ -237,14 +262,14 @@ async function update(req, res) {
     ...req.body.data,
     reservation_id: res.locals.reservation.reservation_id,
   };
-  const data = await reservationsService.update(updatedRes);
+  const data = await service.update(updatedRes);
   res.status(200).json({ data });
 }
 
 async function updateStatus(req, res) {
   const { status } = res.locals;
   const { reservation_id } = res.locals.reservation;
-  const data = await reservationsService.updateStatus(reservation_id, status);
+  const data = await service.updateStatus(reservation_id, status);
   res.status(200).json({ data });
 }
 
@@ -277,6 +302,7 @@ module.exports = {
   ],
   updateStatus: [
     reservationExists,
+    hasValidStatus,
     asyncErrorBoundary(updateStatus),
   ],
   reservationExists,
