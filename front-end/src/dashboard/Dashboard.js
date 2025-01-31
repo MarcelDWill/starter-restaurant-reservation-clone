@@ -2,17 +2,23 @@ import React, { useEffect, useState } from "react";
 import { listReservations } from "../utils/api";
 import {today, next, previous} from "../utils/date-time";
 import ErrorAlert from "../layout/ErrorAlert";
-
+import  useQuery  from "../utils/useQuery";
 /**
  * Defines the dashboard page.
  * @param date
  *  the date for which the user wants to view reservations.
  * @returns {JSX.Element}
  */
-function Dashboard({ date }) {
-  const [date, setDate] = useState(today());//setting the date to today
+function Dashboard() {//
+  
   const [reservations, setReservations] = useState([]);
   const [reservationsError, setReservationsError] = useState(null);
+
+  let date = today();
+  const query = useQuery().get("date");
+  if (query) {
+    date = query;
+  }
 
   useEffect(loadDashboard, [date]);
 

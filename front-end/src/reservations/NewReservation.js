@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ReservationForm from "./ReservationForm";
+import { createReservation } from "../utils/api";
+import ErrorAlert from "../layout/ErrorAlert";
 
 function NewReservation() {
     const navigate = useNavigate();
@@ -10,8 +12,9 @@ function NewReservation() {
         mobile_number: "",
         reservation_date: "",
         reservation_time: "",
-        people: 1,
+        people: "1",
     });
+    const [errorAlert, setErrorAlert] = useState(null);
 
     const changeHandler = ({ target }) => {
         setFormData({
@@ -20,29 +23,31 @@ function NewReservation() {
         });
     };
 
+    const submitHandler = async (event) => {
+        event.preventDefault();
+        
+        const abortController = new AbortController();
+        try {
+            await createReservation(formData, abortController.signal);
+            navigate("/dashboard");
+        } catch (error) {
+            setErrorAlert(error);
+        }
+        return () => abortController.abort();
+    };
+
     return (
         <div>
             <h1>New Reservation</h1>
-            <form onSubmit={handleSubmit}>
-                <label>Name: </label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
-                <br />
-                <label>Date: </label>
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                <br />
-                <label>Time: </label>
-                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-                <br />
-                <label>People: </label>
-                <input type="number" value={people} onChange={(e) => setPeople(e.target.value)} />
-                <br />
-                <label>Phone: </label>
-                <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                <br />
-                <button type="submit">Submit</button>
-            </form>
+            <ErrorAlert error={errorAlert} />
+            <ReservationForm
+                formData={formData}
+                changeHandler={changeHandler}
+                submitHandler={submitHandler}
+            />
         </div>
     );
+
 }
 
-export default newReservation;
+export default NewReservation;
