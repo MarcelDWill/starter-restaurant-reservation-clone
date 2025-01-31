@@ -95,10 +95,10 @@ const hasReservationId = hasProperties("reservation_id");
 
 function tableIsOccupied(req, res, next) {
     const { table } = res.locals;
-    if (table.reservation_id) {
+    if (!table.reservation_id) {
       return next({
         status: 400,
-        message: "Table is occupied.",
+        message: "Table is not occupied.",
       });
     }
     next();
@@ -198,7 +198,7 @@ async function deleteSeat(req, res, next) {
     try {
       const status = "finished";
       await service.updateStatus(reservation_id, status);
-      await service.deleteSeatAssignment(table_id);
+      await service.deleteSeat(table_id);
       res.status(200).json({ data: { status: "finished" } });
     } catch (error) {
       next(error);

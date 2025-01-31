@@ -42,6 +42,12 @@ function update(updatedTable) {
     .then((updatedRecord) => updatedRecord[0]);
 }
 
+function updateStatus(reservation_id, status){
+    return knex("reservations")
+        .where({ reservation_id: reservation_id })
+        .update({ status: status })
+}
+
 function destroy(table_id) {
     return knex("tables")
     .where({ table_id }).del();
@@ -61,6 +67,7 @@ module.exports = {
     create,
     read,
     update,
+    updateStatus,
     destroy,
     deleteSeat,
     readReservation,
