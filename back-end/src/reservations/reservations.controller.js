@@ -232,6 +232,18 @@ function hasValidStatus(req, res, next) {
   });
 }
 
+function isBooked(req, res, next){
+  const { status } = req.body.data;
+
+  if (status && status !== "booked") {
+    return next({
+      status: 400,
+      message: `Invalid status: ${status}`,
+    });
+  }
+  next();
+}
+
 /**
  * List handler for reservation resources
  */
@@ -285,6 +297,7 @@ module.exports = {
     hasValidNumber,                   // Ensure 'people' is a valid number before date/time
     hasValidDate,                     // Validate reservation date and ensure not a closed day
     hasValidTime,                     // Validate reservation time
+    isBooked,                         //
     asyncErrorBoundary(validateBody), // Additional validation logic (general)
     asyncErrorBoundary(create),       // Create reservation
   ],

@@ -172,7 +172,7 @@ async function seat(req, res, next) {
     }
 
     try {
-        const data = await service.seat(table_id, reservation_id);
+        const data = await service.seat(table_id, reservation_id);//
         res.status(200).json({ data });
     } catch (error) {
         next(error);
