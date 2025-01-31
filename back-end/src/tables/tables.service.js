@@ -18,6 +18,7 @@ function read(table_id) {
     .select("*")
     .where({ table_id })
     .first();
+
 }
 
 function readReservation(reservation_id) {
