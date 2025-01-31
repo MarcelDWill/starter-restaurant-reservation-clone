@@ -108,14 +108,9 @@ async function tableIsUnoccupied(req, res, next) {
     const { table_id } = req.params;
     const table = await service.read(table_id);
 
-    if (!table) {
-        return next({
-            status: 404,
-            message: `Table ${table_id} cannot be found.`,
-        });
-    }
+    
 
-    if (!table.reservation_id) {
+    if (table.reservation_id) {
         return next({
             status: 400,
             message: `Table ${table_id} is not occupied.`, // Ensure this message is clear
@@ -238,7 +233,7 @@ module.exports = {
         hasReservationId,                    // Ensure reservation_id is present
         reservationIdExists,                 // Ensure the reservation exists
         validTableCapacity,                  // Ensure the table capacity is sufficient for the reservation
-        tableIsOccupied,                     // Ensure the table is not already occupied
+        tableIsUnoccupied,                     // Ensure the table is not already occupied
         asyncErrorBoundary(seat)             // Seat the reservation if validations pass
     ],
 
