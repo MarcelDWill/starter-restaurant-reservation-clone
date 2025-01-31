@@ -11,6 +11,7 @@ function listByDate(reservation_date) {//function to list reservations by date
     return knex('reservations')
     .select('*')//selecting all columns
     .where({ reservation_date })//where the reservation_date is equal to the reservation_date passed in
+    .whereNot({ status: "finished" })
     .orderBy('reservation_time');//ordering by reservation_time
 }
 

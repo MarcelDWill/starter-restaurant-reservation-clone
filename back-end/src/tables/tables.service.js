@@ -31,7 +31,8 @@ function readReservation(reservation_id) {
 function seat(table_id, reservation_id) {
     return knex("tables")
       .where({ table_id })
-      .update({ reservation_id }, ["*"]);
+      .update({ reservation_id }, "*")
+      .then((updatedRecords) => updatedRecords[0]);
   }
 
 function update(updatedTable) {
@@ -45,7 +46,8 @@ function update(updatedTable) {
 function updateStatus(reservation_id, status){
     return knex("reservations")
         .where({ reservation_id: reservation_id })
-        .update({ status: status })
+        .update({ status })
+        .then((updatedRecords) => updatedRecords[0]);
 }
 
 function destroy(table_id) {
