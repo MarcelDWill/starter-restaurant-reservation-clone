@@ -15,7 +15,6 @@ const app = express();
 const corsOptions = {
   origin: [
     process.env.FRONTEND_URL || "http://localhost:3000",
-    "http://localhost:3000",  // Local development
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
