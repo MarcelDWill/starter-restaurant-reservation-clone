@@ -13,7 +13,12 @@ const tablesRouter = require("./tables/tables.router");
 
 const app = express();
 
-app.use(cors());
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",  // Replace with your frontend Render URL
+    optionsSuccessStatus: 200,
+  };
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/reservations", reservationsRouter);
@@ -21,5 +26,9 @@ app.use("/tables", tablesRouter);
 
 app.use(notFound);
 app.use(errorHandler);
+
+app.get("/", (req, res) => {
+    res.send("Backend is running.");
+  });
 
 module.exports = app;
