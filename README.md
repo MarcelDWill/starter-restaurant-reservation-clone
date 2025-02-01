@@ -1,3 +1,9 @@
+
+FRONTEND https://starter-restaurant-reservation-clone.onrender.com
+BACKEND https://starter-restaurant-reservation-clone-tesf.onrender.com
+
+
+
 # Capstone: Restaurant Reservation System
 
 > You have been hired as a full stack developer at _Periodic Tables_, a startup that is creating a reservation system for fine dining restaurants.
