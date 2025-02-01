@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { listTables, updateTableForSeating } from '../utils/api';
 import ErrorAlert from '../layout/ErrorAlert';
 
+
+
 function SeatReservation() {
   const { reservation_id } = useParams();
   const [tables, setTables] = useState([]);

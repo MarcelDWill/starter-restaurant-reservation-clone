@@ -36,10 +36,10 @@ function Dashboard({ date = today() }) {
       <button onClick={() => navigate(`/dashboard?date=${today()}`)}>Today</button>
       <button onClick={() => navigate(`/dashboard?date=${next(date)}`)}>Next</button>
 
-      <h2>Reservations</h2>
+      
       <ReservationsList reservations={reservations} />
 
-      <h2>Tables</h2>
+      
       <TablesList tables={tables} />
     </main>
   );

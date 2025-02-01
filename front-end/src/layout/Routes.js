@@ -5,24 +5,30 @@ import NewReservation from '../reservations/newReservation';
 import EditReservation from '../reservations/EditReservation';
 import SeatReservation from '../reservations/SeatReservation';
 import SearchReservation from '../reservations/SearchReservation';
-import NotFound from './NotFound';
-import NewTable from '../tables/NewTable';  // Double-check the file path and name!
+import NewTable from '../tables/NewTable';
+import NotFound from '../layout/NotFound';
 
 
 function AppRoutes() {
   return (
     <Routes>
+      {/* Redirect root path to the dashboard */}
       <Route path="/" element={<Navigate to="/dashboard" />} />
+
+      {/* Main routes */}
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/reservations/new" element={<NewReservation />} />
       <Route path="/reservations/:reservation_id/edit" element={<EditReservation />} />
       <Route path="/reservations/:reservation_id/seat" element={<SeatReservation />} />
-      <Route path="/tables/new" element={<NewTable />} />
       <Route path="/search" element={<SearchReservation />} />
+      <Route path="/tables/new" element={<NewTable />} />
+
+      {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 export default AppRoutes;
+
 
