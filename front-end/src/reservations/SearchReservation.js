@@ -7,8 +7,9 @@ function SearchReservation() {
   const [reservations, setReservations] = useState([]);
   const [error, setError] = useState(null);
 
-  const handleChange = ({ target }) => {
-    setMobileNumber(target.value);
+  const handleNumberInput = (e) => {
+    e.target.value = e.target.value.replace(/\D/g, "");  // Allow only digits
+    setMobileNumber(e.target.value);
   };
 
   const handleSubmit = async (event) => {
@@ -34,13 +35,13 @@ function SearchReservation() {
             name="mobile_number"
             type="tel"
             value={mobileNumber}
-            onChange={handleChange}
+            onInput={handleNumberInput}
             required
           />
         </div>
         <button type="submit" className="btn btn-primary">Find</button>
       </form>
-      
+
       {reservations.length > 0 ? (
         <ul>
           {reservations.map((reservation) => (
@@ -57,3 +58,4 @@ function SearchReservation() {
 }
 
 export default SearchReservation;
+

@@ -1,45 +1,45 @@
-import React, { useEffect, useState } from "react";
-import { listReservations, listTables } from "../utils/api";
-import ErrorAlert from "../layout/ErrorAlert";
-import ReservationsList from "../reservations/ReservationsList";
-import TablesList from "../tables/TablesList";
-import { useNavigate, useLocation } from "react-router-dom";
-import { previous, next, today } from "../utils/date-time";
+import React, { useEffect, useState } from 'react';
+import { listReservations, listTables } from '../utils/api';
+import ErrorAlert from '../layout/ErrorAlert';
+import ReservationsList from '../reservations/ReservationsList';
+import TablesList from '../tables/TablesList';
+import { previous, next, today } from '../utils/date-time';
 
-function Dashboard({ date = today() }) {
+function Dashboard({ date: initialDate }) {
+  const [date, setDate] = useState(initialDate || today());
   const [reservations, setReservations] = useState([]);
   const [tables, setTables] = useState([]);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    const abortController = new AbortController();
-    setError(null);
+    const loadDashboard = () => {
+      const abortController = new AbortController();
+      setError(null);
 
-    listReservations({ date }, abortController.signal)
-      .then(setReservations)
-      .catch((err) => setError({ message: err.message || "Failed to load reservations" }));
+      listReservations({ date }, abortController.signal)
+        .then(setReservations)
+        .catch(setError);
 
-    listTables(abortController.signal)
-      .then(setTables)
-      .catch((err) => setError({ message: err.message || "Failed to load tables" }));
+      listTables(abortController.signal)
+        .then(setTables)
+        .catch(setError);
 
-    return () => abortController.abort();
-  }, [date, location]);
+      return () => abortController.abort();
+    };
+
+    loadDashboard();
+  }, [date]);
 
   return (
     <main>
       <h1>Dashboard</h1>
       <ErrorAlert error={error} />
-      <button onClick={() => navigate(`/dashboard?date=${previous(date)}`)}>Previous</button>
-      <button onClick={() => navigate(`/dashboard?date=${today()}`)}>Today</button>
-      <button onClick={() => navigate(`/dashboard?date=${next(date)}`)}>Next</button>
-
-      
+      <div>
+        <button onClick={() => setDate(previous(date))}>Previous</button>
+        <button onClick={() => setDate(today())}>Today</button>
+        <button onClick={() => setDate(next(date))}>Next</button>
+      </div>
       <ReservationsList reservations={reservations} />
-
-      
       <TablesList tables={tables} />
     </main>
   );
