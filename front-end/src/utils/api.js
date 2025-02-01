@@ -17,7 +17,7 @@ async function fetchJson(url, options, onCancel) {
     return payload.data;
   } catch (error) {
     if (error.name !== "AbortError") {
-      console.error(error.stack);
+      console.error("Fetch Error:", error);
       throw error;
     }
     return Promise.resolve(onCancel);
@@ -25,11 +25,16 @@ async function fetchJson(url, options, onCancel) {
 }
 
 export async function listReservations(params, signal) {
-  const url = new URL(`${BASE_URL}/reservations`);
+  const url = new URL(`/reservations`, BASE_URL);
   Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value.toString()));
 
   return await fetch(url, { signal })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`Failed to fetch reservations: ${res.statusText}`);
+      }
+      return res.json();
+    })
     .then((data) => data.data || []);
 }
 
