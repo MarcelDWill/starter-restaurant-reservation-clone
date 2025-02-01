@@ -1,11 +1,11 @@
-import React from 'react';
-import Menu from './Menu';
-import './Layout.css';
+import React from "react";
+import Menu from "./Menu";  // Ensure you have a working Menu.js
+import "./Layout.css";
 
 function Layout({ children }) {
   return (
     <div className="container-fluid">
-      <div className="row h-100">
+      <div className="row">
         <div className="col-md-2 side-bar">
           <Menu />
         </div>
@@ -18,3 +18,4 @@ function Layout({ children }) {
 }
 
 export default Layout;
+
