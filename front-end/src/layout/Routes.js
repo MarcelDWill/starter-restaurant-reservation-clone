@@ -1,43 +1,28 @@
-import React from "react";
-import { Route, Routes } from "react-router-dom";
-import Dashboard from "../dashboard/Dashboard";
-import NewReservation from "../reservations/newReservation";
-import EditReservation from "../reservations/EditReservation";
-import SearchReservation from "../reservations/SearchReservation";
-import SeatReservation from "../tables/SeatReservation";
-import NotFound from "./NotFound";
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Dashboard from '../dashboard/Dashboard';
+import NewReservation from '../reservations/newReservation';
+import EditReservation from '../reservations/EditReservation';
+import SeatReservation from '../reservations/SeatReservation';
+import SearchReservation from '../reservations/SearchReservation';
+import NotFound from './NotFound';
+import NewTable from '../tables/NewTable';  // Double-check the file path and name!
 
 
-/**
- * Defines all the routes for the application.
- *
- * You will need to make changes to this file.
- *
- * @returns {JSX.Element}
- */
 function AppRoutes() {
   return (
     <Routes>
-      <Route exact path="/reservations/new">
-        <NewReservation />
-      </Route>
-      <Route exact path="/reservations/:reservation_id/edit">
-        <EditReservation />
-      </Route>
-      <Route exact path="/reservations/:reservation_id/seat">
-        <SeatReservation />
-      </Route>
-      <Route exact path="/search">
-        <SearchReservation />
-      </Route>
-      <Route exact path={["/dashboard", "/dashboard/:date"]}>
-        <Dashboard />
-      </Route>
-      <Route>
-        <NotFound />
-      </Route>
+      <Route path="/" element={<Navigate to="/dashboard" />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/reservations/new" element={<NewReservation />} />
+      <Route path="/reservations/:reservation_id/edit" element={<EditReservation />} />
+      <Route path="/reservations/:reservation_id/seat" element={<SeatReservation />} />
+      <Route path="/tables/new" element={<NewTable />} />
+      <Route path="/search" element={<SearchReservation />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 export default AppRoutes;
+

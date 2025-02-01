@@ -1,19 +1,20 @@
 import React from "react";
 
 /**
- * Defines the alert message to render if the specified error is truthy.
- * @param error
- *  an instance of an object with `.message` property as a string, typically an Error instance.
- * @returns {JSX.Element}
- *  a bootstrap danger alert that contains the message string.
+ * Defines the error alert component.
+ * If no error is provided, no alert is rendered.
  */
-
 function ErrorAlert({ error }) {
+  if (!error || !error.message) {
+    return null;  // Safely handle cases where error is undefined
+  }
+
   return (
-    error && (
-      <div className="alert alert-danger m-2">Error: {error.message}</div>
-    )
+    <div className="alert alert-danger">
+      <strong>Error:</strong> {error.message}
+    </div>
   );
 }
 
 export default ErrorAlert;
+

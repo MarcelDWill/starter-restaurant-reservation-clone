@@ -1,17 +1,8 @@
-import React from "react";
-import Menu from "./Menu";
-import AppRoutes from "./Routes";
+import React from 'react';
+import Menu from './Menu';
+import './Layout.css';
 
-import "./Layout.css";
-
-/**
- * Defines the main layout of the application.
- *
- * You will not need to make changes to this file.
- *
- * @returns {JSX.Element}
- */
-function Layout() {
+function Layout({ children }) {
   return (
     <div className="container-fluid">
       <div className="row h-100">
@@ -19,7 +10,7 @@ function Layout() {
           <Menu />
         </div>
         <div className="col">
-          <AppRoutes />
+          {children}
         </div>
       </div>
     </div>

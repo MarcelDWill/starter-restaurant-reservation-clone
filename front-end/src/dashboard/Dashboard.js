@@ -1,18 +1,12 @@
-/**
- * Defines the dashboard page.
- * @param date
- *  the date for which the user wants to view reservations.
- * @returns {JSX.Element}
- */
 import React, { useEffect, useState } from "react";
 import { listReservations, listTables } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";
 import ReservationsList from "../reservations/ReservationsList";
 import TablesList from "../tables/TablesList";
-import { useNavigate , useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { previous, next, today } from "../utils/date-time";
 
-function Dashboard({ date }) {
+function Dashboard({ date = today() }) {
   const [reservations, setReservations] = useState([]);
   const [tables, setTables] = useState([]);
   const [error, setError] = useState(null);
@@ -22,12 +16,15 @@ function Dashboard({ date }) {
   useEffect(() => {
     const abortController = new AbortController();
     setError(null);
+
     listReservations({ date }, abortController.signal)
       .then(setReservations)
-      .catch(setError);
+      .catch((err) => setError({ message: err.message || "Failed to load reservations" }));
+
     listTables(abortController.signal)
       .then(setTables)
-      .catch(setError);
+      .catch((err) => setError({ message: err.message || "Failed to load tables" }));
+
     return () => abortController.abort();
   }, [date, location]);
 
@@ -38,7 +35,11 @@ function Dashboard({ date }) {
       <button onClick={() => navigate(`/dashboard?date=${previous(date)}`)}>Previous</button>
       <button onClick={() => navigate(`/dashboard?date=${today()}`)}>Today</button>
       <button onClick={() => navigate(`/dashboard?date=${next(date)}`)}>Next</button>
+
+      <h2>Reservations</h2>
       <ReservationsList reservations={reservations} />
+
+      <h2>Tables</h2>
       <TablesList tables={tables} />
     </main>
   );
