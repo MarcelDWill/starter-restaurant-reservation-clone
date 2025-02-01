@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "../layout/Layout";
 import Dashboard from "../dashboard/Dashboard";
-import NewReservation from "../reservations/newReservation";
+import NewReservation from "../reservations/NewReservation";
 import EditReservation from "../reservations/EditReservation";
 import SeatReservation from "../reservations/SeatReservation";
 import SearchReservation from "../reservations/SearchReservation";
