@@ -12,14 +12,23 @@ const tablesRouter = require("./tables/tables.router");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",  // Allow local development
+  "https://starter-restaurant-reservation-clone.onrender.com"  // Allow deployed frontend
+];
+
 const corsOptions = {
-  origin: [
-    "http://localhost:3000",  // For local development
-    "https://starter-restaurant-reservation-clone.onrender.com"  // Deployed frontend
-  ],
+  origin: (origin, callback) => {
+    // Allow requests from known origins or no origin (for server-side or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 200,
+  optionsSuccessStatus: 200,  // Handle legacy browsers
 };
 
 app.use(cors(corsOptions));
