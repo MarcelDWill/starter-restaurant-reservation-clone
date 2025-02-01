@@ -1,4 +1,7 @@
 const BASE_URL = process.env.REACT_APP_API_BASE_URL;
+if (!BASE_URL) {
+  console.error("REACT_APP_API_BASE_URL is not defined. Check your .env file.");
+}
 
 const headers = new Headers();
 headers.append("Content-Type", "application/json");
@@ -39,11 +42,18 @@ export async function listReservations(params, signal) {
 }
 
 export async function listTables(signal) {
-  const url = new URL(`${BASE_URL}/tables`);
+  const url = new URL(`/tables`, BASE_URL);
+
   return await fetch(url, { signal })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`Failed to fetch tables: ${res.statusText}`);
+      }
+      return res.json();
+    })
     .then((data) => data.data || []);
 }
+
 
 export async function createReservation(reservation) {
   const url = `${BASE_URL}/reservations`;
