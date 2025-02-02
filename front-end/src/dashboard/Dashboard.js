@@ -18,11 +18,17 @@ function Dashboard({ date: initialDate }) {
 
       listReservations({ date }, abortController.signal)
         .then(setReservations)
-        .catch(setError);
+        .catch((err) => {
+          console.error("Error fetching reservations:", err);
+          setError(err);
+        });
 
       listTables(abortController.signal)
         .then(setTables)
-        .catch(setError);
+        .catch((err) => {
+          console.error("Error fetching tables:", err);
+          setError(err);
+        });
 
       return () => abortController.abort();
     };

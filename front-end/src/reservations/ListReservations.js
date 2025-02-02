@@ -9,17 +9,17 @@ function ListReservations({ reservations, date }) {
       reservation.status !== "finished" &&
       reservation.status !== "cancelled"
     ) {
-      const cancelHandler = () => {
-        if (
-          window.confirm(
-            "Do you want to cancel this reservation?\n This cannot be undone."
-          )
-        ) {
-          changeReservationStatus(reservation.reservation_id, "cancelled").then(
-            (res) => window.location.reload()
-          );
+      const cancelHandler = async (reservation_id) => {
+        if (window.confirm("Do you want to cancel this reservation? This cannot be undone.")) {
+          try {
+            await changeReservationStatus(reservation_id, "cancelled");
+            window.location.reload();  // Or handle state updates dynamically
+          } catch (err) {
+            console.error("Failed to cancel reservation:", err);
+          }
         }
       };
+      
 
       return (
         <tr key={index} className="res-text table-row">

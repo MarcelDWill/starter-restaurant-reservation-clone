@@ -105,4 +105,20 @@ export async function updateTableForSeating(table_id, reservation_id, signal) {
   return await fetchJson(url, options);
 }
 
+export async function changeReservationStatus(reservation_id, status) {
+  const url = `${process.env.REACT_APP_API_BASE_URL}/reservations/${reservation_id}/status`;
+  const options = {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: { status } }),
+  };
+
+  return await fetch(url, options).then((response) => {
+    if (!response.ok) {
+      throw new Error(`Failed to update reservation status: ${response.statusText}`);
+    }
+    return response.json();
+  });
+}
+
 
