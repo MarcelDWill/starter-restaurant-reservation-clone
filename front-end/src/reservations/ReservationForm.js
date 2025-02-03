@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createReservation } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";  // Correctly using ErrorAlert now
+import { isTuesday, today } from "../utils/date-time";
 
 function ReservationForm() {
   const initialFormState = {
@@ -42,14 +43,33 @@ function ReservationForm() {
   
     // Client-side validations
     const validationErrors = [];
+  
+    // Check for required fields
     if (!formData.first_name) validationErrors.push("First name is required.");
     if (!formData.last_name) validationErrors.push("Last name is required.");
     if (!formData.mobile_number) validationErrors.push("Mobile number is required.");
     if (!formData.reservation_date) validationErrors.push("Reservation date is required.");
     if (!formData.reservation_time) validationErrors.push("Reservation time is required.");
-    if (!formData.people || formData.people < 1) {
-      validationErrors.push("Party size must be at least 1.");
+    if (!formData.people || formData.people < 1) validationErrors.push("Party size must be at least 1.");
+  
+    const reservationDate = new Date(formData.reservation_date);
+  
+    // Prevent reservations on Tuesdays
+    if (isTuesday(reservationDate)) {
+      validationErrors.push("Reservations cannot be made on Tuesdays.");
     }
+  
+    // Prevent reservations in the past
+    const todayDate = new Date(today());
+const formattedReservationDate = new Date(formData.reservation_date);
+todayDate.setHours(0, 0, 0, 0);  // Ensure both dates are at midnight
+formattedReservationDate.setHours(0, 0, 0, 0);
+
+if (formattedReservationDate < todayDate) {
+  validationErrors.push("Reservations cannot be made in the past.");
+}
+
+
   
     if (validationErrors.length) {
       setErrors(validationErrors);
@@ -58,7 +78,6 @@ function ReservationForm() {
   
     try {
       await createReservation(formData);
-      // Navigate to dashboard and trigger data fetch for the correct date
       navigate(`/dashboard?date=${formData.reservation_date}`);
     } catch (error) {
       setBackendError(error);

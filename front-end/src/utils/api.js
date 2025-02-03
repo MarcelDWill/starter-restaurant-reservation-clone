@@ -121,4 +121,12 @@ export async function changeReservationStatus(reservation_id, status) {
   });
 }
 
+export async function finishTable(table_id) {
+  const url = `${process.env.REACT_APP_API_BASE_URL}/tables/${table_id}/seat`;
+  const options = {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  };
+  return await fetch(url, options);
+}
 

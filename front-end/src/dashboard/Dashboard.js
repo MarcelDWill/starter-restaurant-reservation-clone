@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { listReservations, listTables } from '../utils/api';
-import ErrorAlert from '../layout/ErrorAlert';
-import ReservationsList from '../reservations/ReservationsList';
-import TablesList from '../tables/TablesList';
-import { previous, next, today } from '../utils/date-time';
-import { formatAsDate } from '../utils/date-time';
+import React, { useEffect, useState, useCallback } from "react";
+import { listReservations, listTables } from "../utils/api";
+import ErrorAlert from "../layout/ErrorAlert";
+import ReservationsList from "../reservations/ReservationsList";
+import TablesList from "../tables/ListTables";
+import { previous, next, today, formatAsDate } from "../utils/date-time";
 
 function Dashboard({ date: initialDate }) {
   const [date, setDate] = useState(initialDate || today());
@@ -12,37 +11,29 @@ function Dashboard({ date: initialDate }) {
   const [tables, setTables] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const loadDashboard = () => {
-      const abortController = new AbortController();
-      setError(null);
+  const loadDashboard = useCallback(() => {
+    const abortController = new AbortController();
+    setError(null);
 
-      const formattedDate = formatAsDate(date);
+    listReservations({ date: formatAsDate(date) }, abortController.signal)
+      .then(setReservations)
+      .catch(setError);
 
-      listReservations({ date: formattedDate }, abortController.signal)
-        .then(setReservations)
-        .catch((err) => {
-          console.error("Error fetching reservations:", err);
-          setError(err);
-        });
+    listTables(abortController.signal)
+      .then(setTables)
+      .catch(setError);
 
-      listTables(abortController.signal)
-        .then(setTables)
-        .catch((err) => {
-          console.error("Error fetching tables:", err);
-          setError(err);
-        });
-
-      return () => abortController.abort();
-    };
-
-    loadDashboard();
+    return () => abortController.abort();
   }, [date]);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   return (
     <main>
       <h1>Dashboard</h1>
-      <h2>Date: {date}</h2> {/* Display the selected date */}
+      <h2>Date: {formatAsDate(date)}</h2>  {/* Display formatted date */}
       <ErrorAlert error={error} />
       <div>
         <button onClick={() => setDate(previous(date))}>Previous</button>
@@ -50,7 +41,7 @@ function Dashboard({ date: initialDate }) {
         <button onClick={() => setDate(next(date))}>Next</button>
       </div>
       <ReservationsList reservations={reservations} />
-      <TablesList tables={tables} />
+      <TablesList tables={tables} loadDashboard={loadDashboard} />
     </main>
   );
 }

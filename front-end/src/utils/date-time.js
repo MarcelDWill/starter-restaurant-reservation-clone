@@ -46,8 +46,11 @@ export function formatAsTime(timeString) {
  *  the today's date formatted as YYYY-MM-DD
  */
 export function today() {
-  return asDateString(new Date());
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);  // Set time to midnight
+  return now.toISOString().slice(0, 10);  // Return YYYY-MM-DD format
 }
+
 
 /**
  * Subtracts one day to the specified date and return it in as YYYY-MM-DD.
@@ -80,3 +83,8 @@ export function next(currentDate) {
   date.setDate(date.getDate() + 1);
   return asDateString(date);
 }
+export function isTuesday(date) {
+  return new Date(date).getDay() === 2;
+}
+
+

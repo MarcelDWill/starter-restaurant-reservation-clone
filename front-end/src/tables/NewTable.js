@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createTable } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";
+import { listTables } from "../utils/api";
 
 function NewTable() {
   const initialTableState = { table_name: "", capacity: 1 };
@@ -19,13 +20,23 @@ function NewTable() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
+  
     try {
+      const existingTables = await listTables();  // Fetch all tables
+  
+      // Check if the table name already exists
+      if (existingTables.some((table) => table.table_name === tableData.table_name)) {
+        setError({ message: `Table "${tableData.table_name}" already exists.` });
+        return;
+      }
+  
       await createTable(tableData);
       navigate("/dashboard");
     } catch (err) {
       setError(err);
     }
   };
+  
 
   return (
     <div>
