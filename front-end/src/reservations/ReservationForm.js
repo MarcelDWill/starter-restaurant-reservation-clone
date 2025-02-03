@@ -39,7 +39,7 @@ function ReservationForm() {
     event.preventDefault();
     setErrors([]);
     setBackendError(null);
-
+  
     // Client-side validations
     const validationErrors = [];
     if (!formData.first_name) validationErrors.push("First name is required.");
@@ -50,20 +50,21 @@ function ReservationForm() {
     if (!formData.people || formData.people < 1) {
       validationErrors.push("Party size must be at least 1.");
     }
-
+  
     if (validationErrors.length) {
       setErrors(validationErrors);
       return;
     }
-
+  
     try {
       await createReservation(formData);
+      // Navigate to dashboard and trigger data fetch for the correct date
       navigate(`/dashboard?date=${formData.reservation_date}`);
-      window.location.reload();  // Ensure newly created reservations are fetched
     } catch (error) {
       setBackendError(error);
     }
   };
+  
 
   return (
     <div className="container">

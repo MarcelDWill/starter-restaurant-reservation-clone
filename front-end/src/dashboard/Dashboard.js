@@ -4,6 +4,7 @@ import ErrorAlert from '../layout/ErrorAlert';
 import ReservationsList from '../reservations/ReservationsList';
 import TablesList from '../tables/TablesList';
 import { previous, next, today } from '../utils/date-time';
+import { formatAsDate } from '../utils/date-time';
 
 function Dashboard({ date: initialDate }) {
   const [date, setDate] = useState(initialDate || today());
@@ -16,7 +17,9 @@ function Dashboard({ date: initialDate }) {
       const abortController = new AbortController();
       setError(null);
 
-      listReservations({ date }, abortController.signal)
+      const formattedDate = formatAsDate(date);
+
+      listReservations({ date: formattedDate }, abortController.signal)
         .then(setReservations)
         .catch((err) => {
           console.error("Error fetching reservations:", err);
@@ -39,6 +42,7 @@ function Dashboard({ date: initialDate }) {
   return (
     <main>
       <h1>Dashboard</h1>
+      <h2>Date: {date}</h2> {/* Display the selected date */}
       <ErrorAlert error={error} />
       <div>
         <button onClick={() => setDate(previous(date))}>Previous</button>
