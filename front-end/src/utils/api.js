@@ -92,16 +92,37 @@ export async function searchByMobileNumber(mobile_number, signal) {
     .then((data) => data.data || []);
 }
 
-export async function updateTableForSeating(table_id, reservation_id, signal) {
-  const url = `${BASE_URL}/tables/${table_id}/seat`;
+export async function updateTableForSeating(table_id, reservation_id) {
+  const url = `${process.env.REACT_APP_API_BASE_URL}/tables/${table_id}/seat`;
   const options = {
     method: "PUT",
-    headers,
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: { reservation_id } }),
-    signal,
   };
-  return await fetchJson(url, options);
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(`Failed to seat reservation: ${response.statusText}`);
+  }
+  return await response.json();
 }
+
+export async function updateReservation(reservation_id, reservationData) {
+  const url = `${process.env.REACT_APP_API_BASE_URL}/reservations/${reservation_id}`;
+  const options = {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: reservationData }),
+  };
+
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const errorResponse = await response.json();  // Capture server error response
+    throw new Error(errorResponse.message || `Failed to update reservation: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+
 
 export async function changeReservationStatus(reservationId, status) {
   const url = `${process.env.REACT_APP_API_BASE_URL}/reservations/${reservationId}/status`;

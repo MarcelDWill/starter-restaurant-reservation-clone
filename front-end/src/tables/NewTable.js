@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createTable } from "../utils/api";
+import { createTable, listTables } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";
-import { listTables } from "../utils/api";
 
 function NewTable() {
   const initialTableState = { table_name: "", capacity: 1 };
@@ -17,26 +16,41 @@ function NewTable() {
     });
   };
 
+  const validateForm = () => {
+    if (tableData.table_name.length < 2) {
+      return "Table name must be at least 2 characters long.";
+    }
+    if (tableData.capacity < 1) {
+      return "Capacity must be at least 1 person.";
+    }
+    return null;
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
-  
+
+    const validationError = validateForm();
+    if (validationError) {
+      setError({ message: validationError });
+      return;
+    }
+
     try {
-      const existingTables = await listTables();  // Fetch all tables
-  
+      const existingTables = await listTables(); // Fetch all tables
+
       // Check if the table name already exists
       if (existingTables.some((table) => table.table_name === tableData.table_name)) {
         setError({ message: `Table "${tableData.table_name}" already exists.` });
         return;
       }
-  
+
       await createTable(tableData);
       navigate("/dashboard");
     } catch (err) {
       setError(err);
     }
   };
-  
 
   return (
     <div>
@@ -60,9 +74,9 @@ function NewTable() {
             id="capacity"
             name="capacity"
             type="number"
+            min="1"
             onChange={handleChange}
             value={tableData.capacity}
-            min="1"
             required
           />
         </div>
@@ -76,4 +90,5 @@ function NewTable() {
 }
 
 export default NewTable;
+
 

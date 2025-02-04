@@ -7,7 +7,7 @@ function ListTables({ tables, loadDashboard }) {
     if (window.confirm("Is this table ready to seat new guests? This cannot be undone.")) {
       try {
         await finishTable(table_id);
-        loadDashboard();  // Refresh the dashboard after finishing the table
+        loadDashboard(); // Refresh the dashboard after finishing the table
       } catch (err) {
         console.error("Error finishing table:", err);
       }
@@ -56,4 +56,5 @@ function ListTables({ tables, loadDashboard }) {
 }
 
 export default ListTables;
+
 

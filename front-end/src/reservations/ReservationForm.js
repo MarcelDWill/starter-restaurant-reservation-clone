@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { createReservation, readReservation, changeReservationStatus } from "../utils/api";
+import { createReservation, readReservation, updateReservation } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";
 import { isTuesday, today, formatAsUTCDate } from "../utils/date-time";
 
@@ -37,7 +37,7 @@ function ReservationForm() {
   }, [reservation_id]);
 
   // Format phone numbers as the user types
-  const formatPhoneNumber = (num) => {
+  /*const formatPhoneNumber = (num) => {
     if (!num) return num;
     const mobNum = num.replace(/[^\d]/g, "");
     const len = mobNum.length;
@@ -45,12 +45,17 @@ function ReservationForm() {
     if (len < 4) return mobNum;
     if (len < 7) return `(${mobNum.slice(0, 3)}) ${mobNum.slice(3)}`;
     return `(${mobNum.slice(0, 3)}) ${mobNum.slice(3, 6)}-${mobNum.slice(6, 10)}`;
-  };
+  };*/
 
+  const handleNumberInput = (event) => {
+    const input = event.target.value.replace(/\D/g, "");  // Remove non-digits
+    setFormData({ ...formData, mobile_number: input });
+  };
+  
   const handleChange = ({ target }) => {
     const { name, value } = target;
-    if (target.type === "tel") {
-      setFormData({ ...formData, [name]: formatPhoneNumber(value) });
+    if (name === "mobile_number") {
+      handleNumberInput({ target });
     } else if (target.type === "number") {
       setFormData({ ...formData, [name]: Number(value) });
     } else {
@@ -62,49 +67,67 @@ function ReservationForm() {
     event.preventDefault();
     setErrors([]);
     setBackendError(null);
-
+  
     const validationErrors = [];
-
+  
     // Normalize dates for comparison
     const todayDate = formatAsUTCDate(today());
     const reservationDate = formatAsUTCDate(formData.reservation_date);
-
+  
     // Check for past dates
     if (reservationDate < todayDate) {
       validationErrors.push("Reservations cannot be made in the past.");
     }
-
-    // Check for same-day reservations with past times
-    const [hours, minutes] = formData.reservation_time.split(":");
-    const reservationTime = new Date();
-    reservationTime.setUTCHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
+  
+    // Format the time as HH:MM:SS
+    let reservationTime = formData.reservation_time;
+    if (reservationTime.length === 5) {
+      reservationTime += ":00";  // Append seconds if not provided
+    }
+  
+    const [hours, minutes] = reservationTime.split(":");
+    const reservationTimeObj = new Date();
+    reservationTimeObj.setUTCHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
     const now = new Date();
-    if (reservationDate === todayDate && reservationTime < now) {
+  
+    // Check for same-day reservations with past times
+    if (reservationDate === todayDate && reservationTimeObj < now) {
       validationErrors.push("Reservations cannot be made for earlier times today.");
     }
-
+  
     // Prevent reservations on Tuesdays
     if (isTuesday(reservationDate)) {
       validationErrors.push("Reservations cannot be made on Tuesdays.");
     }
-
+  
     if (validationErrors.length) {
       setErrors(validationErrors);
       return;
     }
-
+  
+    // Ensure the status is set to "booked" if not already defined
+    if (!formData.status) {
+      formData.status = "booked";
+    }
+  
     try {
+      const payload = {
+        ...formData,
+        reservation_time: reservationTime,  // Correctly formatted time
+      };
       if (reservation_id) {
-        await changeReservationStatus(formData);
+        await updateReservation(reservation_id, payload);
       } else {
-        await createReservation(formData);
+        await createReservation(payload);
       }
       navigate(`/dashboard?date=${formData.reservation_date}`);
     } catch (error) {
-      setBackendError(error);
+      console.error("Reservation update failed:", error);
+      setBackendError(error.message);
     }
   };
-
+  
+  
   return (
     <div className="container">
       <h2 className="my-3">Reservation Form</h2>
@@ -148,20 +171,20 @@ function ReservationForm() {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="mobile_number" className="form-label">
-            Mobile Number
-          </label>
-          <input
-            id="mobile_number"
-            name="mobile_number"
-            type="tel"
-            className="form-control"
-            value={formData.mobile_number}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
+    <label htmlFor="mobile_number" className="form-label">
+      Mobile Number
+    </label>
+    <input
+      id="mobile_number"
+      name="mobile_number"
+      type="tel"
+      className="form-control"
+      value={formData.mobile_number}
+      onInput={handleNumberInput}
+      onChange={handleChange}
+      required
+    />
+  </div>
         <div className="mb-3">
           <label htmlFor="reservation_date" className="form-label">
             Reservation Date

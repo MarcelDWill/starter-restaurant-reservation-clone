@@ -208,29 +208,18 @@ async function validateData(request, res, next) {
 }
 
 function hasValidStatus(req, res, next) {
-  const { status } = req.body.data;
-  const currentStatus = res.locals.reservation.status;
+  const { status } = req.body.data || {};
+  const validStatuses = ["booked", "seated", "finished", "cancelled"];
 
-  if (currentStatus === "finished" || currentStatus === "cancelled") {
+  if (!status || !validStatuses.includes(status)) {
     return next({
       status: 400,
-      message: `Reservation status is finished`,
+      message: `Invalid status: ${status}`,
     });
   }
-  if (
-    status === "booked" ||
-    status === "seated" ||
-    status === "finished" ||
-    status === "cancelled"
-  ) {
-    res.locals.status = status;
-    return next();
-  }
-  next({
-    status: 400,
-    message: `Invalid status: ${status}`,
-  });
+  next();
 }
+
 
 function isBooked(req, res, next){
   const { status } = req.body.data;
@@ -270,13 +259,20 @@ async function read(req, res) {
 }
 
 async function update(req, res) {
+  console.log("Updating reservation with data:", req.body.data);
   const updatedRes = {
     ...req.body.data,
     reservation_id: res.locals.reservation.reservation_id,
   };
-  const data = await service.update(updatedRes);
-  res.status(200).json({ data });
+  try {
+    const data = await service.update(updatedRes);
+    res.status(200).json({ data });
+  } catch (error) {
+    console.error("Error updating reservation:", error);
+    res.status(500).json({ error: "Failed to update reservation." });
+  }
 }
+
 
 async function updateStatus(req, res) {
   const { status } = res.locals;

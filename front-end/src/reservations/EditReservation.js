@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate  } from "react-router-dom";
-import { readReservation } from "../utils/api";
-
+import { useParams, useNavigate } from "react-router-dom";
+import { readReservation, updateReservation } from "../utils/api";
 import ReservationForm from "./ReservationForm";
 import ErrorAlert from "../layout/ErrorAlert";
 
@@ -26,7 +25,14 @@ function EditReservation() {
   return (
     <ReservationForm
       initialData={reservation}
-      onSuccess={() => navigate(`/dashboard?date=${reservation.reservation_date}`)}
+      onSubmit={async (updatedReservation) => {
+        try {
+          await updateReservation(reservation_id, updatedReservation);
+          navigate(`/dashboard?date=${updatedReservation.reservation_date}`);
+        } catch (err) {
+          setError(err);
+        }
+      }}
     />
   );
 }
