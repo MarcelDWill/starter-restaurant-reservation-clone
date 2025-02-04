@@ -46,52 +46,47 @@ function hasValidDate(req, res, next) {
   console.log("Received reservation_date:", reservation_date);
   console.log("Received reservation_time:", reservation_time);
 
-  if (!reservation_date || isNaN(Date.parse(reservation_date))) {
+  // Validate reservation_date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!reservation_date || !dateRegex.test(reservation_date)) {
     return next({
       status: 400,
-      message: `Invalid reservation_date`,
+      message: `Invalid reservation_date format. Use YYYY-MM-DD.`,
     });
   }
 
-  if (!reservation_time || !/^\d{2}:\d{2}$/.test(reservation_time)) {
-    return next({
-      status: 400,
-      message: `Invalid reservation_time`,
-    });
-  }
-
-  const day = new Date(reservation_date).getUTCDay();
+  // Ensure the date is not a Tuesday
+  const day = new Date(`${reservation_date}T00:00:00`).getDay();
   if (day === 2) {
     return next({
       status: 400,
-      message: `Restaurant is closed on Tuesdays`,
+      message: "Restaurant is closed on Tuesdays.",
     });
   }
 
-  const formattedDate = new Date(`${reservation_date}T${reservation_time}:00`);
-  console.log("Formatted reservation date and time:", formattedDate);
+  // Convert reservation time to local time
+  const formattedDateTime = new Date(`${reservation_date}T${reservation_time}`);
+  console.log("Formatted reservation date and time:", formattedDateTime);
 
-  if (isNaN(formattedDate.getTime())) {
+  if (isNaN(formattedDateTime.getTime())) {
     return next({
       status: 400,
-      message: `Invalid reservation date and time combination`,
+      message: "Invalid reservation date and time combination.",
     });
   }
 
-  const now = new Date(); // Compare using UTC
-  console.log("Current date and time:", now);
+  const now = new Date();
+  console.log("Current local date and time:", now);
 
-  if (formattedDate <= now) {
+  if (formattedDateTime <= now) {
     return next({
       status: 400,
-      message: `Reservation must be in the future`,
+      message: "Reservation must be in the future.",
     });
   }
 
   next();
 }
-
-
 
 async function validateBody(request, res, next) {
   const required = [
@@ -140,9 +135,15 @@ async function validateBody(request, res, next) {
 
 function hasValidTime(req, res, next) {
   const { data = {} } = req.body;
-  const time = data["reservation_time"];
+  let time = data["reservation_time"];
 
-  const timeRegex = /^([01]?\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/;
+  console.log("Received reservation_time:", time);
+  console.log("Formatted time being validated:", reservation_time);
+  console.log("Local time (backend):", new Date(`${reservation_date}T${reservation_time}`));
+
+
+  // Validate either HH:MM or HH:MM:SS (24-hour format)
+  const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
   if (!timeRegex.test(time)) {
     return next({
       status: 400,
@@ -151,6 +152,7 @@ function hasValidTime(req, res, next) {
   }
 
   const [hours, minutes] = time.split(":").map(Number);
+
   if (hours < 10 || (hours === 10 && minutes < 30)) {
     return next({
       status: 400,
@@ -166,7 +168,6 @@ function hasValidTime(req, res, next) {
 
   next();
 }
-
 
 function hasValidNumber(req, res, next) {
   const { data = {} } = req.body;

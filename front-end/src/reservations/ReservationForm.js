@@ -63,70 +63,65 @@ function ReservationForm() {
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setErrors([]);
-    setBackendError(null);
-  
-    const validationErrors = [];
-  
-    // Normalize dates for comparison
-    const todayDate = formatAsUTCDate(today());
-    const reservationDate = formatAsUTCDate(formData.reservation_date);
-  
-    // Check for past dates
-    if (reservationDate < todayDate) {
-      validationErrors.push("Reservations cannot be made in the past.");
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  setErrors([]);
+  setBackendError(null);
+
+  const validationErrors = [];
+
+  let reservationTime = formData.reservation_time;
+  if (reservationTime.length === 5) {
+    reservationTime += ":00";  // Append seconds if not provided
+  }
+
+  const [hours, minutes] = reservationTime.split(":");
+  const reservationTimeObj = new Date();
+  reservationTimeObj.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);  // Local time
+  const now = new Date();
+
+  const todayDate = formatAsUTCDate(today());
+  const reservationDate = formData.reservation_date;
+
+  // Check if the reservation is on a Tuesday
+  if (isTuesday(reservationDate)) {
+    validationErrors.push("Reservations cannot be made on Tuesdays.");
+  }
+
+  // Check for same-day reservations with past times
+  if (reservationDate === todayDate && reservationTimeObj < now) {
+    validationErrors.push("Reservations cannot be made for earlier times today.");
+  }
+
+  if (validationErrors.length) {
+    setErrors(validationErrors);
+    return;
+  }
+
+  // Ensure the status is set to "booked"
+  if (!formData.status) {
+    formData.status = "booked";
+  }
+
+  try {
+    const payload = {
+      ...formData,
+      reservation_time: reservationTime,  // Correctly formatted time
+    };
+
+    if (reservation_id) {
+      await updateReservation(reservation_id, payload);
+    } else {
+      await createReservation(payload);
     }
-  
-    // Format the time as HH:MM:SS
-    let reservationTime = formData.reservation_time;
-    if (reservationTime.length === 5) {
-      reservationTime += ":00";  // Append seconds if not provided
-    }
-  
-    const [hours, minutes] = reservationTime.split(":");
-    const reservationTimeObj = new Date();
-    reservationTimeObj.setUTCHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
-    const now = new Date();
-  
-    // Check for same-day reservations with past times
-    if (reservationDate === todayDate && reservationTimeObj < now) {
-      validationErrors.push("Reservations cannot be made for earlier times today.");
-    }
-  
-    // Prevent reservations on Tuesdays
-    if (isTuesday(reservationDate)) {
-      validationErrors.push("Reservations cannot be made on Tuesdays.");
-    }
-  
-    if (validationErrors.length) {
-      setErrors(validationErrors);
-      return;
-    }
-  
-    // Ensure the status is set to "booked" if not already defined
-    if (!formData.status) {
-      formData.status = "booked";
-    }
-  
-    try {
-      const payload = {
-        ...formData,
-        reservation_time: reservationTime,  // Correctly formatted time
-      };
-      if (reservation_id) {
-        await updateReservation(reservation_id, payload);
-      } else {
-        await createReservation(payload);
-      }
-      navigate(`/dashboard?date=${formData.reservation_date}`);
-    } catch (error) {
-      console.error("Reservation update failed:", error);
-      setBackendError(error.message);
-    }
-  };
-  
+
+    navigate(`/dashboard?date=${reservationDate}`);
+  } catch (error) {
+    console.error("Reservation update failed:", error);
+    setBackendError(error.message);
+  }
+};
+
   
   return (
     <div className="container">
