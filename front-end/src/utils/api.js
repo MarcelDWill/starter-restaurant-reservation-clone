@@ -33,18 +33,16 @@ async function fetchJson(url, options, onCancel) {
 
 
 export async function listReservations(params, signal) {
-  const url = new URL(`/reservations`, BASE_URL);
-  Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value.toString()));
+  const url = new URL(`${process.env.REACT_APP_API_BASE_URL}/reservations`);
+  Object.entries(params).forEach(([key, value]) =>
+    url.searchParams.append(key, value.toString())
+  );
 
-  return await fetch(url, { signal })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error(`Failed to fetch reservations: ${res.statusText}`);
-      }
-      return res.json();
-    })
-    .then((data) => data.data || []);
+  return await fetchJson(url, { signal }).then(
+    (data) => data.filter((res) => res.status !== "cancelled")  // Filter cancelled here
+  );
 }
+
 
 export async function listTables(signal) {
   const url = new URL(`/tables`, BASE_URL);
@@ -105,20 +103,14 @@ export async function updateTableForSeating(table_id, reservation_id, signal) {
   return await fetchJson(url, options);
 }
 
-export async function changeReservationStatus(reservation_id, status) {
-  const url = `${process.env.REACT_APP_API_BASE_URL}/reservations/${reservation_id}/status`;
+export async function changeReservationStatus(reservationId, status) {
+  const url = `${process.env.REACT_APP_API_BASE_URL}/reservations/${reservationId}/status`;
   const options = {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: { status } }),
   };
-
-  return await fetch(url, options).then((response) => {
-    if (!response.ok) {
-      throw new Error(`Failed to update reservation status: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return await fetchJson(url, options);
 }
 
 export async function finishTable(table_id) {

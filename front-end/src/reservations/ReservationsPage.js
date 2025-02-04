@@ -7,24 +7,26 @@ function ReservationsPage() {
   const [reservations, setReservations] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const loadReservations = () => {
     const abortController = new AbortController();
-    setError(null);
-
     listReservations({}, abortController.signal)
       .then(setReservations)
       .catch(setError);
-
     return () => abortController.abort();
+  };
+
+  useEffect(() => {
+    loadReservations();
   }, []);
 
   return (
     <div>
       <h1>Reservations</h1>
       <ErrorAlert error={error} />
-      <ReservationsList reservations={reservations} />
+      <ReservationsList reservations={reservations} loadDashboard={loadReservations} />
     </div>
   );
 }
 
 export default ReservationsPage;
+

@@ -1,22 +1,24 @@
 import React, { useState } from "react";
 import { searchByMobileNumber } from "../utils/api";
+import ReservationsList from "./ReservationsList";
 import ErrorAlert from "../layout/ErrorAlert";
+import { useNavigate } from "react-router-dom";
 
 function SearchReservation() {
   const [mobileNumber, setMobileNumber] = useState("");
   const [reservations, setReservations] = useState([]);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const handleNumberInput = (e) => {
-    e.target.value = e.target.value.replace(/\D/g, "");  // Allow only digits
-    setMobileNumber(e.target.value);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSearch = async (e) => {
+    e.preventDefault();
     setError(null);
     try {
       const results = await searchByMobileNumber(mobileNumber);
+      if (results.length === 0) {
+        alert("No reservations found.");
+        navigate("/dashboard");  // Redirect if no reservations are found
+      }
       setReservations(results);
     } catch (err) {
       setError(err);
@@ -25,33 +27,22 @@ function SearchReservation() {
 
   return (
     <div>
-      <h2>Search Reservations</h2>
+      <h1>Search Reservations</h1>
       <ErrorAlert error={error} />
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="mobile_number">Mobile Number:</label>
-          <input
-            id="mobile_number"
-            name="mobile_number"
-            type="tel"
-            value={mobileNumber}
-            onInput={handleNumberInput}
-            required
-          />
-        </div>
-        <button type="submit" className="btn btn-primary">Find</button>
+      <form onSubmit={handleSearch}>
+        <label htmlFor="mobileNumber">Mobile Number</label>
+        <input
+          id="mobileNumber"
+          type="tel"
+          value={mobileNumber}
+          onChange={(e) => setMobileNumber(e.target.value)}
+          required
+        />
+        <button type="submit">Search</button>
       </form>
 
-      {reservations.length > 0 ? (
-        <ul>
-          {reservations.map((reservation) => (
-            <li key={reservation.reservation_id}>
-              {reservation.first_name} {reservation.last_name} - {reservation.reservation_time}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No reservations found</p>
+      {reservations.length > 0 && (
+        <ReservationsList reservations={reservations} loadDashboard={window.location.reload} />
       )}
     </div>
   );

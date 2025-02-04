@@ -83,8 +83,14 @@ export function next(currentDate) {
   date.setDate(date.getDate() + 1);
   return asDateString(date);
 }
-export function isTuesday(date) {
-  return new Date(date).getDay() === 2;
+export function isTuesday(dateString) {
+  const date = new Date(dateString);
+  return date.getDay() === 2;  // 2 represents Tuesday
+}
+
+export function formatAsUTCDate(date) {
+  const utcDate = new Date(date);
+  return new Date(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate()).toISOString().slice(0, 10);
 }
 
 

@@ -3,7 +3,7 @@ import { listReservations, listTables } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";
 import ReservationsList from "../reservations/ReservationsList";
 import TablesList from "../tables/ListTables";
-import { previous, next, today, formatAsDate } from "../utils/date-time";
+import { previous, next, today, formatAsUTCDate } from "../utils/date-time";
 
 function Dashboard({ date: initialDate }) {
   const [date, setDate] = useState(initialDate || today());
@@ -15,7 +15,7 @@ function Dashboard({ date: initialDate }) {
     const abortController = new AbortController();
     setError(null);
 
-    listReservations({ date: formatAsDate(date) }, abortController.signal)
+    listReservations({ date: formatAsUTCDate(date) }, abortController.signal)
       .then(setReservations)
       .catch(setError);
 
@@ -33,14 +33,14 @@ function Dashboard({ date: initialDate }) {
   return (
     <main>
       <h1>Dashboard</h1>
-      <h2>Date: {formatAsDate(date)}</h2>  {/* Display formatted date */}
+      <h2>Date: {formatAsUTCDate(date)}</h2>  {/* Display UTC date */}
       <ErrorAlert error={error} />
       <div>
         <button onClick={() => setDate(previous(date))}>Previous</button>
         <button onClick={() => setDate(today())}>Today</button>
         <button onClick={() => setDate(next(date))}>Next</button>
       </div>
-      <ReservationsList reservations={reservations} />
+      <ReservationsList reservations={reservations} loadDashboard={loadDashboard} />
       <TablesList tables={tables} loadDashboard={loadDashboard} />
     </main>
   );

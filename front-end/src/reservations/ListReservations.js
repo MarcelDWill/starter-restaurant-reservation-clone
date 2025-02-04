@@ -2,97 +2,68 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { changeReservationStatus } from "../utils/api";
 
-function ListReservations({ reservations, date }) {
-  const displayReservations = reservations.map((reservation, index) => {
-    if (
-      reservation.reservation_date === date &&
-      reservation.status !== "finished" &&
-      reservation.status !== "cancelled"
-    ) {
-      const cancelHandler = async (reservation_id) => {
-        if (window.confirm("Do you want to cancel this reservation? This cannot be undone.")) {
-          try {
-            await changeReservationStatus(reservation_id, "cancelled");
-            window.location.reload();  // Or handle state updates dynamically
-          } catch (err) {
-            console.error("Failed to cancel reservation:", err);
-          }
-        }
-      };
-      
+export default function ReservationsList({ reservations, loadDashboard }) {
+  if (!reservations.length) {
+    return <p>No reservations found for the selected date.</p>;
+  }
 
-      return (
-        <tr key={index} className="res-text table-row">
-          <td>{reservation.reservation_id}</td>
-          <td>{reservation.first_name}</td>
-          <td>{reservation.last_name}</td>
-          <td>{reservation.mobile_number}</td>
-          <td>{reservation.reservation_date}</td>
-          <td>{reservation.reservation_time}</td>
-          <td>{reservation.people}</td>
-          <td>
-            <p data-reservation-id-status={reservation.reservation_id}>
-              {reservation.status}
+  const handleCancel = async (reservationId) => {
+    if (
+      window.confirm(
+        "Do you want to cancel this reservation?\nThis action cannot be undone."
+      )
+    ) {
+      await changeReservationStatus(reservationId, "cancelled");
+      loadDashboard(); // Refresh dashboard data
+    }
+  };
+
+  return (
+    <div className="reservations-list">
+      {reservations.map((reservation) => (
+        <div key={reservation.reservation_id} className="reservation-card">
+          <div className={`status-label ${reservation.status}`}>
+            {reservation.status}
+          </div>
+          <div className="reservation-details">
+            <h3>
+              {reservation.first_name} {reservation.last_name}
+            </h3>
+            <p>
+              <em>Expecting party of {reservation.people}</em>
             </p>
-          </td>
-          <td>
-            {reservation.status !== "booked" ? null : (
+            <p>
+              {new Date(reservation.reservation_date).toLocaleDateString()} at{" "}
+              {reservation.reservation_time}
+            </p>
+            <p>Contact: {reservation.mobile_number}</p>
+          </div>
+          <div className="reservation-actions">
+            {reservation.status === "booked" && (
               <>
                 <Link
                   to={`/reservations/${reservation.reservation_id}/seat`}
-                  state={{ reservation }}
-                  className="btn btn-primary mx-1"
+                  className="btn btn-primary"
                 >
                   Seat
                 </Link>
-
                 <Link
                   to={`/reservations/${reservation.reservation_id}/edit`}
-                  className="btn btn-secondary mx-1"
+                  className="btn btn-secondary"
                 >
                   Edit
                 </Link>
-
                 <button
-                  data-reservation-id-cancel={reservation.reservation_id}
-                  className="btn btn-danger mx-1"
-                  state={{ reservation }}
-                  type="button"
-                  onClick={() => cancelHandler(reservation.reservation_id)}
+                  onClick={() => handleCancel(reservation.reservation_id)}
+                  className="btn btn-danger"
                 >
                   Cancel
                 </button>
               </>
             )}
-          </td>
-        </tr>
-      );
-    }
-    return null;
-  });
-
-  return (
-    <div>
-      <div>
-        <table className="table table-striped table-bordered">
-          <thead className="thread-dark">
-            <tr>
-              <th>Reservation ID</th>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>Mobile Number</th>
-              <th>Reservation Date</th>
-              <th>Reservation Time</th>
-              <th>People</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>{displayReservations}</tbody>
-        </table>
-      </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
-
-export default ListReservations;

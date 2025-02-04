@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createReservation } from "../utils/api";
-import ErrorAlert from "../layout/ErrorAlert";  // Correctly using ErrorAlert now
-import { isTuesday, today } from "../utils/date-time";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { createReservation, readReservation, changeReservationStatus } from "../utils/api";
+import ErrorAlert from "../layout/ErrorAlert";
+import { isTuesday, today, formatAsUTCDate } from "../utils/date-time";
 
 function ReservationForm() {
   const initialFormState = {
@@ -17,82 +17,98 @@ function ReservationForm() {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState([]);
   const [backendError, setBackendError] = useState(null);
+  const { reservation_id } = useParams();
   const navigate = useNavigate();
 
-  const handleNumberInput = (e) => {
-    e.target.value = e.target.value.replace(/\D/g, "");  // Allow only digits
-    handleChange(e);
+  // Load existing reservation if reservation_id is provided (for updates)
+  useEffect(() => {
+    if (reservation_id) {
+      const abortController = new AbortController();
+      readReservation(reservation_id, abortController.signal)
+        .then((loadedRes) => {
+          setFormData({
+            ...loadedRes,
+            reservation_date: formatAsUTCDate(loadedRes.reservation_date),
+          });
+        })
+        .catch(setBackendError);
+      return () => abortController.abort();
+    }
+  }, [reservation_id]);
+
+  // Format phone numbers as the user types
+  const formatPhoneNumber = (num) => {
+    if (!num) return num;
+    const mobNum = num.replace(/[^\d]/g, "");
+    const len = mobNum.length;
+
+    if (len < 4) return mobNum;
+    if (len < 7) return `(${mobNum.slice(0, 3)}) ${mobNum.slice(3)}`;
+    return `(${mobNum.slice(0, 3)}) ${mobNum.slice(3, 6)}-${mobNum.slice(6, 10)}`;
   };
 
   const handleChange = ({ target }) => {
     const { name, value } = target;
-    setFormData({
-      ...formData,
-      [name]: name === "people" ? Number(value) : value,
-    });
-  };
-
-  const handleCancel = () => {
-    navigate(-1);
+    if (target.type === "tel") {
+      setFormData({ ...formData, [name]: formatPhoneNumber(value) });
+    } else if (target.type === "number") {
+      setFormData({ ...formData, [name]: Number(value) });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
     setBackendError(null);
-  
-    // Client-side validations
+
     const validationErrors = [];
-  
-    // Check for required fields
-    if (!formData.first_name) validationErrors.push("First name is required.");
-    if (!formData.last_name) validationErrors.push("Last name is required.");
-    if (!formData.mobile_number) validationErrors.push("Mobile number is required.");
-    if (!formData.reservation_date) validationErrors.push("Reservation date is required.");
-    if (!formData.reservation_time) validationErrors.push("Reservation time is required.");
-    if (!formData.people || formData.people < 1) validationErrors.push("Party size must be at least 1.");
-  
-    const reservationDate = new Date(formData.reservation_date);
-  
+
+    // Normalize dates for comparison
+    const todayDate = formatAsUTCDate(today());
+    const reservationDate = formatAsUTCDate(formData.reservation_date);
+
+    // Check for past dates
+    if (reservationDate < todayDate) {
+      validationErrors.push("Reservations cannot be made in the past.");
+    }
+
+    // Check for same-day reservations with past times
+    const [hours, minutes] = formData.reservation_time.split(":");
+    const reservationTime = new Date();
+    reservationTime.setUTCHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
+    const now = new Date();
+    if (reservationDate === todayDate && reservationTime < now) {
+      validationErrors.push("Reservations cannot be made for earlier times today.");
+    }
+
     // Prevent reservations on Tuesdays
     if (isTuesday(reservationDate)) {
       validationErrors.push("Reservations cannot be made on Tuesdays.");
     }
-  
-    // Prevent reservations in the past
-    const todayDate = new Date(today());
-const formattedReservationDate = new Date(formData.reservation_date);
-todayDate.setHours(0, 0, 0, 0);  // Ensure both dates are at midnight
-formattedReservationDate.setHours(0, 0, 0, 0);
 
-if (formattedReservationDate < todayDate) {
-  validationErrors.push("Reservations cannot be made in the past.");
-}
-
-
-  
     if (validationErrors.length) {
       setErrors(validationErrors);
       return;
     }
-  
+
     try {
-      await createReservation(formData);
+      if (reservation_id) {
+        await changeReservationStatus(formData);
+      } else {
+        await createReservation(formData);
+      }
       navigate(`/dashboard?date=${formData.reservation_date}`);
     } catch (error) {
       setBackendError(error);
     }
   };
-  
 
   return (
     <div className="container">
-      <h2 className="my-3">New Reservation</h2>
-
-      {/* Display backend error using ErrorAlert */}
+      <h2 className="my-3">Reservation Form</h2>
       <ErrorAlert error={backendError} />
-
-      {/* Display client-side validation errors */}
       {errors.length > 0 && (
         <div className="alert alert-danger">
           {errors.map((err, index) => (
@@ -100,10 +116,11 @@ if (formattedReservationDate < todayDate) {
           ))}
         </div>
       )}
-
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label htmlFor="first_name" className="form-label">First Name</label>
+          <label htmlFor="first_name" className="form-label">
+            First Name
+          </label>
           <input
             id="first_name"
             name="first_name"
@@ -116,7 +133,9 @@ if (formattedReservationDate < todayDate) {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="last_name" className="form-label">Last Name</label>
+          <label htmlFor="last_name" className="form-label">
+            Last Name
+          </label>
           <input
             id="last_name"
             name="last_name"
@@ -129,20 +148,24 @@ if (formattedReservationDate < todayDate) {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="mobile_number" className="form-label">Mobile Number</label>
+          <label htmlFor="mobile_number" className="form-label">
+            Mobile Number
+          </label>
           <input
             id="mobile_number"
             name="mobile_number"
             type="tel"
             className="form-control"
             value={formData.mobile_number}
-            onInput={handleNumberInput}
+            onChange={handleChange}
             required
           />
         </div>
 
         <div className="mb-3">
-          <label htmlFor="reservation_date" className="form-label">Reservation Date</label>
+          <label htmlFor="reservation_date" className="form-label">
+            Reservation Date
+          </label>
           <input
             id="reservation_date"
             name="reservation_date"
@@ -155,7 +178,9 @@ if (formattedReservationDate < todayDate) {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="reservation_time" className="form-label">Reservation Time</label>
+          <label htmlFor="reservation_time" className="form-label">
+            Reservation Time
+          </label>
           <input
             id="reservation_time"
             name="reservation_time"
@@ -168,21 +193,27 @@ if (formattedReservationDate < todayDate) {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="people" className="form-label">Party Size</label>
+          <label htmlFor="people" className="form-label">
+            Party Size
+          </label>
           <input
             id="people"
             name="people"
             type="number"
             className="form-control"
             value={formData.people}
-            onChange={handleChange}
             min="1"
+            onChange={handleChange}
             required
           />
         </div>
 
-        <button type="submit" className="btn btn-primary me-2">Submit</button>
-        <button type="button" className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
+        <button type="submit" className="btn btn-primary me-2">
+          Submit
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
+          Cancel
+        </button>
       </form>
     </div>
   );
