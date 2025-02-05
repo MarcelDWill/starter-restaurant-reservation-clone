@@ -52,68 +52,78 @@ function ReservationForm() {
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setErrors([]);
-    setBackendError(null);
-  
-    const validationErrors = [];
-  
-    let reservationTime = formData.reservation_time;
-    if (!reservationTime || reservationTime.trim() === "") {
-      validationErrors.push("Reservation time is required.");
-    } else {
-      if (reservationTime.length === 5) {
-        reservationTime += ":00";  // Append seconds if not provided
-      }
-    }
-  
-    const [hours, minutes] = reservationTime.split(":");
-    const reservationTimeObj = new Date();
-    reservationTimeObj.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);  // Local time
-    const now = new Date();
-  
-    const todayDate = formatAsUTCDate(today());
-    const reservationDate = formData.reservation_date;
-  
-    // Check if the reservation is on a Tuesday
-    if (isTuesday(reservationDate)) {
-      validationErrors.push("Reservations cannot be made on Tuesdays.");
-    }
-  
-    // Check for same-day reservations with past times
-    if (reservationDate === todayDate && reservationTimeObj < now) {
-      validationErrors.push("Reservations cannot be made for earlier times today.");
-    }
-  
-    if (validationErrors.length) {
-      setErrors(validationErrors);
-      return;
-    }
-  
-    // Ensure the status is set to "booked"
-    if (!formData.status) {
-      formData.status = "booked";
-    }
-  
-    try {
-      const payload = {
-        ...formData,
-        reservation_time: reservationTime,  // Correctly formatted time
-      };
-  
-      if (reservation_id) {
-        await updateReservation(reservation_id, payload);
-      } else {
-        await createReservation(payload);
-      }
-  
-      navigate(`/dashboard?date=${reservationDate}`);
-    } catch (error) {
-      console.error("Reservation update failed:", error);
-      setBackendError(error.message);
-    }
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  setErrors([]);
+  setBackendError(null);
+
+  const validationErrors = [];
+
+  // Handle and format reservation_time as "HH:MM"
+  let reservationTime = formData.reservation_time;
+  if (reservationTime.length === 8) {
+    reservationTime = reservationTime.slice(0, 5);  // Convert "HH:MM:SS" to "HH:MM"
+  }
+
+  // Validate reservation_date and reservation_time presence
+  if (!formData.reservation_date || !reservationTime) {
+    validationErrors.push("Reservation date and time are required.");
+  }
+
+  // Validate date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(formData.reservation_date)) {
+    validationErrors.push("Invalid reservation_date format. Use YYYY-MM-DD.");
+  }
+
+  // Check if the reservation date is a Tuesday
+  if (isTuesday(formData.reservation_date)) {
+    validationErrors.push("Reservations cannot be made on Tuesdays.");
+  }
+
+  // Check if the reservation is for earlier times today
+  const todayDate = formatAsUTCDate(today());
+  const [hours, minutes] = reservationTime.split(":");
+  const reservationTimeObj = new Date();
+  reservationTimeObj.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
+  const now = new Date();
+
+  if (formData.reservation_date === todayDate && reservationTimeObj < now) {
+    validationErrors.push("Reservations cannot be made for earlier times today.");
+  }
+
+  if (validationErrors.length > 0) {
+    setErrors(validationErrors);
+    return;
+  }
+
+  // Ensure the status is set to "booked" if not provided
+  if (!formData.status) {
+    formData.status = "booked";
+  }
+
+  // Format the payload
+  const payload = {
+    ...formData,
+    reservation_time: reservationTime,  // Ensure correct time format
   };
+
+  console.log("Submitting reservation payload:", payload);  // Debug log
+
+  try {
+    if (reservation_id) {
+      await updateReservation(reservation_id, payload);
+    } else {
+      await createReservation(payload);
+    }
+
+    navigate(`/dashboard?date=${payload.reservation_date}`);
+  } catch (error) {
+    console.error("Reservation submission failed:", error);
+    setBackendError(error.message || "An unexpected error occurred.");
+  }
+};
+
  
   return (
     <div className="container">
