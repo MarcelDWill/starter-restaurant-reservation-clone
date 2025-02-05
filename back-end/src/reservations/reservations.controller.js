@@ -65,8 +65,10 @@ function hasValidDate(req, res, next) {
   }
 
   // Convert reservation time to local time
-  const formattedDateTime = new Date(`${reservation_date}T${reservation_time}`);
-  console.log("Formatted reservation date and time:", formattedDateTime);
+  if (reservation_time) {
+    const formattedDateTime = new Date(`${reservation_date}T${reservation_time}`);
+    console.log("Formatted reservation date and time:", formattedDateTime);
+  }
 
   if (isNaN(formattedDateTime.getTime())) {
     return next({
@@ -130,29 +132,22 @@ async function validateBody(request, res, next) {
   next();
 }
 
-
-
-
 function hasValidTime(req, res, next) {
   const { data = {} } = req.body;
-  let time = data["reservation_time"];
+  const reservation_time = data["reservation_time"];  // Ensure correct access
 
-  console.log("Received reservation_time:", time);
-  console.log("Formatted time being validated:", reservation_time);
-  console.log("Local time (backend):", new Date(`${reservation_date}T${reservation_time}`));
-
+  console.log("Received reservation_time:", reservation_time);
 
   // Validate either HH:MM or HH:MM:SS (24-hour format)
   const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
-  if (!timeRegex.test(time)) {
+  if (!reservation_time || !timeRegex.test(reservation_time)) {
     return next({
       status: 400,
       message: "Invalid reservation_time format. Use HH:MM or HH:MM:SS.",
     });
   }
 
-  const [hours, minutes] = time.split(":").map(Number);
-
+  const [hours, minutes] = reservation_time.split(":").map(Number);
   if (hours < 10 || (hours === 10 && minutes < 30)) {
     return next({
       status: 400,
@@ -168,6 +163,7 @@ function hasValidTime(req, res, next) {
 
   next();
 }
+
 
 function hasValidNumber(req, res, next) {
   const { data = {} } = req.body;

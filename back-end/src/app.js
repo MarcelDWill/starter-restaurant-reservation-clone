@@ -19,7 +19,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests from known origins or no origin (for server-side or curl requests)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -28,7 +27,7 @@ const corsOptions = {
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 200,  // Handle legacy browsers
+  optionsSuccessStatus: 200  // Handle legacy browsers
 };
 
 app.use(cors(corsOptions));
