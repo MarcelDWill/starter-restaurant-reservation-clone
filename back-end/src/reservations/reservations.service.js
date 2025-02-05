@@ -40,7 +40,12 @@ function update(updatedReservation) {
     .select('*')//selecting all columns
     .where({ reservation_id: updatedReservation.reservation_id })//where the reservation_id is equal to the reservation_id passed in
     .update(updatedReservation, '*')//updating the reservation with the updatedReservation object
-    .then((updatedRecord) => updatedRecord[0]);//returning the first element of the array
+    .then((updatedRecord) => {
+        if (!updatedRecord.length) {
+          throw new Error("Reservation not found or update failed.");
+        }
+        return updatedRecord[0];
+      });
 }
 
 function updateStatus(reservation_id, status) {

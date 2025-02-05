@@ -36,17 +36,6 @@ function ReservationForm() {
     }
   }, [reservation_id]);
 
-  // Format phone numbers as the user types
-  /*const formatPhoneNumber = (num) => {
-    if (!num) return num;
-    const mobNum = num.replace(/[^\d]/g, "");
-    const len = mobNum.length;
-
-    if (len < 4) return mobNum;
-    if (len < 7) return `(${mobNum.slice(0, 3)}) ${mobNum.slice(3)}`;
-    return `(${mobNum.slice(0, 3)}) ${mobNum.slice(3, 6)}-${mobNum.slice(6, 10)}`;
-  };*/
-
   const handleNumberInput = (event) => {
     const input = event.target.value.replace(/\D/g, "");  // Remove non-digits
     setFormData({ ...formData, mobile_number: input });
@@ -169,20 +158,21 @@ function ReservationForm() {
         </div>
 
         <div className="mb-3">
-    <label htmlFor="mobile_number" className="form-label">
-      Mobile Number
-    </label>
-    <input
-      id="mobile_number"
-      name="mobile_number"
-      type="tel"
-      className="form-control"
-      value={formData.mobile_number}
-      onInput={handleNumberInput}
-      onChange={handleChange}
-      required
-    />
-  </div>
+          <label htmlFor="mobile_number" className="form-label">
+            Mobile Number
+          </label>
+          <input
+            id="mobile_number"
+            name="mobile_number"
+            type="tel"
+            className="form-control"
+            value={formData.mobile_number}
+            onInput={handleNumberInput}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
         <div className="mb-3">
           <label htmlFor="reservation_date" className="form-label">
             Reservation Date

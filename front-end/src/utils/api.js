@@ -1,9 +1,9 @@
-const BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
 
 console.log("REACT_APP_API_BASE_URL:", BASE_URL);
 
 if (!BASE_URL) {
-  console.error("REACT_APP_API_BASE_URL is not defined. Check your .env file.");
+  throw new Error("REACT_APP_API_BASE_URL is not defined");
 }
 
 const headers = new Headers();
@@ -15,10 +15,9 @@ async function fetchJson(url, options, onCancel) {
     if (response.status === 204) {
       return null;
     }
-
     const payload = await response.json();
     if (payload.error) {
-      return Promise.reject({ message: payload.error });
+      throw new Error(payload.error);
     }
     return payload.data;
   } catch (error) {
@@ -30,10 +29,8 @@ async function fetchJson(url, options, onCancel) {
   }
 }
 
-
-
 export async function listReservations(params, signal) {
-  const url = new URL(`${process.env.REACT_APP_API_BASE_URL}/reservations`);
+  const url = new URL(`${BASE_URL}/reservations`);
   Object.entries(params).forEach(([key, value]) =>
     url.searchParams.append(key, value.toString())
   );

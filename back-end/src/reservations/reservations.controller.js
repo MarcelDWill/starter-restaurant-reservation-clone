@@ -48,10 +48,19 @@ function hasValidDate(req, res, next) {
 
   // Validate reservation_date format (YYYY-MM-DD)
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  const timeRegex = /^\d{2}:\d{2}$/;
+
   if (!reservation_date || !dateRegex.test(reservation_date)) {
     return next({
       status: 400,
       message: `Invalid reservation_date format. Use YYYY-MM-DD.`,
+    });
+  }
+
+  if (!reservation_time || !timeRegex.test(reservation_time)) {
+    return next({
+      status: 400,
+      message: `Invalid reservation_time format. Use HH:MM in 24-hour format.`,
     });
   }
 
@@ -64,11 +73,9 @@ function hasValidDate(req, res, next) {
     });
   }
 
-  // Convert reservation time to local time
-  if (reservation_time) {
-    const formattedDateTime = new Date(`${reservation_date}T${reservation_time}`);
-    console.log("Formatted reservation date and time:", formattedDateTime);
-  }
+  // Always declare and set formattedDateTime outside the conditional block
+  const formattedDateTime = new Date(`${reservation_date}T${reservation_time}`);
+  console.log("Formatted reservation date and time:", formattedDateTime);
 
   if (isNaN(formattedDateTime.getTime())) {
     return next({
@@ -90,7 +97,7 @@ function hasValidDate(req, res, next) {
   next();
 }
 
-async function validateBody(request, res, next) {
+async function validateBody(req, res, next) {
   const required = [
     "first_name",
     "last_name",
@@ -101,19 +108,19 @@ async function validateBody(request, res, next) {
   ];
 
   for (const field of required) {
-    if (!request.body.data.hasOwnProperty(field) || request.body.data[field] === "") {
+    if (!req.body.data.hasOwnProperty(field) || req.body.data[field] === "") {
       return next({ status: 400, message: `Field required: '${field}'` });
     }
   }
 
-  if (typeof request.body.data.people !== "number") {
+  if (typeof req.body.data.people !== "number") {
     return next({
       status: 400,
       message: `The 'people' field must be a number.`,
     });
   }
 
-  if (request.body.data.people < 1) {
+  if (req.body.data.people < 1) {
     return next({
       status: 400,
       message: `The 'people' field must be at least 1.`,
@@ -121,7 +128,7 @@ async function validateBody(request, res, next) {
   }
 
   if (
-    Number.isNaN(Date.parse(`${request.body.data.reservation_date} ${request.body.data.reservation_time}`))
+    Number.isNaN(Date.parse(`${req.body.data.reservation_date} ${req.body.data.reservation_time}`))
   ) {
     return next({
       status: 400,
@@ -164,7 +171,6 @@ function hasValidTime(req, res, next) {
   next();
 }
 
-
 function hasValidNumber(req, res, next) {
   const { data = {} } = req.body;
   const people = data["people"];
@@ -186,7 +192,6 @@ function hasValidNumber(req, res, next) {
   next();
 }
 
-
 async function reservationExists(req, res, next) {
   const { reservation_id } = req.params;
   const reservation = await service.read(reservation_id);
@@ -197,8 +202,8 @@ async function reservationExists(req, res, next) {
   next({ status: 404, message: `Reservation ${reservation_id} cannot be found.` });
 }
 
-async function validateData(request, res, next) {
-  if (!request.body.data) {
+async function validateData(req, res, next) {
+  if (!req.body.data) {
       return next({ status: 400, message: "Body must include a data object" });
   }
   next();
@@ -216,7 +221,6 @@ function hasValidStatus(req, res, next) {
   }
   next();
 }
-
 
 function isBooked(req, res, next){
   const { status } = req.body.data;
@@ -270,16 +274,12 @@ async function update(req, res) {
   }
 }
 
-
 async function updateStatus(req, res) {
-  const { status } = res.locals;
+  const { status } = req.body.data;
   const { reservation_id } = res.locals.reservation;
   const data = await service.updateStatus(reservation_id, status);
   res.status(200).json({ data });
 }
-
-
-
 
 module.exports = {
   list: asyncErrorBoundary(list),
@@ -294,10 +294,9 @@ module.exports = {
     asyncErrorBoundary(validateBody), // Additional validation logic (general)
     asyncErrorBoundary(create),       // Create reservation
   ],
-  
   read: [asyncErrorBoundary(reservationExists), read],
   update: [
-    reservationExists,
+    asyncErrorBoundary(reservationExists),
     hasRequiredProperties,
     hasValidProperties,
     hasValidDate,
@@ -308,9 +307,8 @@ module.exports = {
     asyncErrorBoundary(update), // Move this to the end
   ],
   updateStatus: [
-    reservationExists,
+    asyncErrorBoundary(reservationExists),
     hasValidStatus,
     asyncErrorBoundary(updateStatus),
   ],
-  reservationExists,
 };
